@@ -27,15 +27,25 @@ function findComments (fileObj) {
     return fileObj;
 }
 
+function getImportanceValue (text) {
+    const result = text.match(/!/g);
+    if (!result) {
+        return 0;
+    }
+
+    return result.length;
+}
+
 function structComments (acc, fileObj) {
     const fileName = fileObj.path.replace(/^.*[\\\/]/, '');
     const pattern = /((.*){0,1};\s*(\d{4}-\d\d-\d\d|\d\d-\d\d-\d{4}){0,1}\s*;){0,1}(.*)/i;
 
     for (let comment of fileObj.data) { 
         let match = comment.match(pattern);
-        acc.push({ important: match[4].search('!') !== -1, 
-            user: match[2] && match[2].trim() || ' ',
-            date: match[3] && match[3].trim() || ' ',
+        acc.push({
+            importance: getImportanceValue(match[4]),
+            user: match[2] && match[2].trim() || '',
+            date: match[3] && match[3].trim() || '',
             text: match[4].trim(),
             file: fileName });
     }
@@ -50,7 +60,38 @@ function getComments () {
 
 function printAll () {
     console.log(getComments());
-} 
+}
+
+function printImportant () {
+    console.log(getComments().filter(comm => comm.important));
+}
+
+function printByUser(username) { // tODo : romochka;обрабатывать пустой и неопределенный юзернейм
+    console.log(getComments().filter(comm => comm.user.toLowerCase().indexOf(username.toLowerCase()) === 0))
+}
+
+function usernameSort (a, b) {
+   if (!a.user && b.user) {
+       return 1;
+   }
+   if (!b.user && a.user) {
+       return -1;
+   }
+
+   return a.user.localeCompare(b.user);
+}
+
+function printSorted(sortType) {
+    switch (sortType.toLowerCase()) {
+        case 'importance':
+            console.log(getComments().sort((a, b) => b.importance - a.importance));
+            break;
+        case 'user':
+            console.log(getComments().sort(usernameSort));
+        default:
+            break;
+    }
+}
 
 function processCommand (command) {
     const [commandType, commandArg] = command.split(' ');
@@ -60,13 +101,13 @@ function processCommand (command) {
             printAll();
             break;
         case "important":
-            console.log("important");
+            printImportant();
             break;
         case "user":
-            console.log("user");
+            printByUser(commandArg);
             break;
         case "sort":
-            console.log("sort");
+            printSorted(commandArg);
             break;
         case "date":
             console.log("date");
