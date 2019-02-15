@@ -34,9 +34,20 @@ function getImportanceValue (text) {
     return result.length;
 }
 
-function checkDate (dateString) {
+function checkDate (dateString) { // TODO :roma; 15 - 02 - 2019; стоит ли оставлять ограничение до 3 тысячелетия? :)
     const pattern = /^[1-3]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$|^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[1-3]\d{3}$/;
     return pattern.test(dateString.replace(/\s+/g, ''));
+}
+
+function normalizeDate (dateString) {
+    let result = dateString.replace(/\s+/g, '');
+    const pattern = /(\d\d)-(\d\d)-(\d{4})/;
+    const match = result.match(pattern);
+    if (match) {
+        result = match[3] + '-' + match[2] + '-' + match[1];
+    }
+
+    return result;
 }
 
 function structComments (acc, fileObj) {
@@ -44,11 +55,11 @@ function structComments (acc, fileObj) {
     const pattern = /((.*);(.*);){0,1}(.*)/i; // /((.*){0,1};\s*(\d{4}\s*-\s*\d\d\s*-\s*\d\d){0,1}\s*;){0,1}(.*)/i
 
     for (let comment of fileObj.data) { 
-        let match = comment.match(pattern);
+        const match = comment.match(pattern);
         acc.push({
             importance: getImportanceValue(match[4]),
             user: match[2] && match[2].trim() || '',
-            date: match[3] && checkDate(match[3]) ? match[3].replace(/\s+/g, '') : '',
+            date: match[3] && checkDate(match[3]) ? normalizeDate(match[3]) : '',
             text: match[4].trim(),
             file: fileName });
     }
@@ -70,7 +81,12 @@ function printImportant () {
 }
 
 function printByUser(username) { // tODo : romochka;обрабатывать пустой и неопределенный юзернейм
-    console.log(getComments().filter(comm => comm.user.toLowerCase().indexOf(username.toLowerCase()) === 0))
+    if (username) {
+        console.log(getComments().filter(comm => comm.user.toLowerCase().indexOf(username.toLowerCase()) === 0));
+    } else {
+        console.log('Enter command argument: username');
+    }
+    
 }
 
 function usernameSort (a, b) {
@@ -85,19 +101,40 @@ function usernameSort (a, b) {
 }
 
 function printSorted(sortType) {
-    switch (sortType.toLowerCase()) {
-        case 'importance':
-            console.log(getComments().sort((a, b) => b.importance - a.importance));
-            break;
-        case 'user':
-            console.log(getComments().sort(usernameSort));
-        default:
-            break;
+    const commandTip = 'Enter command argument: importance | user | date';
+    if (sortType) {
+        switch (sortType.toLowerCase()) {
+            case 'importance':
+                console.log(getComments().sort((a, b) => b.importance - a.importance));
+                break;
+            case 'user':
+                console.log(getComments().sort(usernameSort));
+                break;
+            case 'date':
+                console.log(getComments().sort((a, b) => -a.date.localeCompare(b.date)));
+                break;
+            default:
+                console.log(commandTip);
+                break;
+    }
+    } else {
+        console.log(commandTip);
+    }
+}
+
+function printByDate (date) {
+    const commandTip = 'Enter command argument: date in one of the formats: yyyy | yyyy-mm | yyyy-mm-dd';
+    if (date) {
+        const pattern = /^(\d{4})(-(\d\d)){0,1}(-(\d\d)){0,1}$/;
+        const match = date.match(pattern);
+        console.log(match);
+    } else {
+        console.log(commandTip);
     }
 }
 
 function processCommand (command) {
-    const [commandType, commandArg] = command.split(' ');
+    const [commandType, commandArg] = command.split(' '); // TODO делить по вервому пробелу и только!!!!!!!
     
     switch (commandType.toLowerCase()) {
         case "show":
@@ -113,7 +150,7 @@ function processCommand (command) {
             printSorted(commandArg);
             break;
         case "date":
-            console.log("date");
+            printByDate(commandArg);
             break;
         case "exit":
             process.exit(0);
@@ -127,4 +164,4 @@ function processCommand (command) {
 // TODO you can do it!
 //               TODO           saskeUzum@k1-kokok sasai   ;   2019-01-01  ;   CHTOTOTTUTNETAK
 //TODO                                                      
-//todoroma@4232@@44954""""";04-10-1996;  benedick cumberskotch
+//todo roma@4232@@44954""""";04-10-1996;  benedick cumberskotch
