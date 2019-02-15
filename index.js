@@ -4,8 +4,6 @@ const { readLine } = require('./console');
 app();
 
 function app () {
-    // const files = getFiles();
-
     console.log('Please, write your command!');
     readLine(processCommand);
 }
@@ -36,16 +34,21 @@ function getImportanceValue (text) {
     return result.length;
 }
 
+function checkDate (dateString) {
+    const pattern = /^[1-3]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$|^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[1-3]\d{3}$/;
+    return pattern.test(dateString.replace(/\s+/g, ''));
+}
+
 function structComments (acc, fileObj) {
     const fileName = fileObj.path.replace(/^.*[\\\/]/, '');
-    const pattern = /((.*){0,1};\s*(\d{4}-\d\d-\d\d|\d\d-\d\d-\d{4}){0,1}\s*;){0,1}(.*)/i;
+    const pattern = /((.*);(.*);){0,1}(.*)/i; // /((.*){0,1};\s*(\d{4}\s*-\s*\d\d\s*-\s*\d\d){0,1}\s*;){0,1}(.*)/i
 
     for (let comment of fileObj.data) { 
         let match = comment.match(pattern);
         acc.push({
             importance: getImportanceValue(match[4]),
             user: match[2] && match[2].trim() || '',
-            date: match[3] && match[3].trim() || '',
+            date: match[3] && checkDate(match[3]) ? match[3].replace(/\s+/g, '') : '',
             text: match[4].trim(),
             file: fileName });
     }
@@ -63,7 +66,7 @@ function printAll () {
 }
 
 function printImportant () {
-    console.log(getComments().filter(comm => comm.important));
+    console.log(getComments().filter(comm => comm.importance > 0));
 }
 
 function printByUser(username) { // tODo : romochka;обрабатывать пустой и неопределенный юзернейм
@@ -124,3 +127,4 @@ function processCommand (command) {
 // TODO you can do it!
 //               TODO           saskeUzum@k1-kokok sasai   ;   2019-01-01  ;   CHTOTOTTUTNETAK
 //TODO                                                      
+//todoroma@4232@@44954""""";04-10-1996;  benedick cumberskotch
