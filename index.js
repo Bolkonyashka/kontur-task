@@ -1,5 +1,6 @@
 const { getAllFilePathsWithExtension, readFile } = require('./fileSystem');
 const { readLine } = require('./console');
+const { printTable } = require('./tablePrinter');
 
 app();
 
@@ -16,9 +17,10 @@ function getFiles () {
 
 function findComments (fileObj) {
     const pattern = /\/\/\s*TODO\s*[\s:]{1}\s*.*/ig;
-    let result = fileObj.data.match(pattern);
-    if (result) {
-        result = result.map(comment => comment.replace(/\/\/\s*TODO\s*[\s:]{1}\s*/ig, ''));
+    let match = fileObj.data.match(pattern);
+    let result = [];
+    if (match) {
+        result = match.map(comment => comment.replace(/\/\/\s*TODO\s*[\s:]{1}\s*/ig, ''));
     }
     fileObj.data = result; // TODO не переиспользовать data, а ввести еще одно свойство - comments?
 
@@ -35,7 +37,8 @@ function getImportanceValue (text) {
 }
 
 function checkDate (dateString) { // TODO :roma; 15 - 02 - 2019; стоит ли оставлять ограничение до 3 тысячелетия? :)
-    const pattern = /^[1-3]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$|^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[1-3]\d{3}$/;
+    const pattern = /^[1-9]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$|^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[1-9]\d{3}$/;
+
     return pattern.test(dateString.replace(/\s+/g, ''));
 }
 
@@ -63,26 +66,26 @@ function structComments (acc, fileObj) {
             text: match[4].trim(),
             file: fileName });
     }
+
     return acc;
 }
 
 function getComments () {
     const filesData = getFiles();
-
     return filesData.map(findComments).reduce(structComments, []);
 }
 
 function printAll () {
-    console.log(getComments());
+    printTable(getComments());
 }
 
 function printImportant () {
-    console.log(getComments().filter(comm => comm.importance > 0));
+    printTable(getComments().filter(comm => comm.importance > 0));
 }
 
-function printByUser(username) { // tODo : romochka;обрабатывать пустой и неопределенный юзернейм
+function printByUser(username) { // tODo : romochka;;обрабатывать пустой и неопределенный юзернейм
     if (username) {
-        console.log(getComments().filter(comm => comm.user.toLowerCase().indexOf(username.toLowerCase()) === 0));
+        printTable(getComments().filter(comm => comm.user.toLowerCase().indexOf(username.toLowerCase()) === 0));
     } else {
         console.log('Enter command argument: username');
     }
@@ -105,13 +108,13 @@ function printSorted(sortType) {
     if (sortType) {
         switch (sortType.toLowerCase()) {
             case 'importance':
-                console.log(getComments().sort((a, b) => b.importance - a.importance));
+                printTable(getComments().sort((a, b) => b.importance - a.importance));
                 break;
             case 'user':
-                console.log(getComments().sort(usernameSort));
+                printTable(getComments().sort(usernameSort));
                 break;
             case 'date':
-                console.log(getComments().sort((a, b) => -a.date.localeCompare(b.date)));
+                printTable(getComments().sort((a, b) => -a.date.localeCompare(b.date)));
                 break;
             default:
                 console.log(commandTip);
@@ -125,17 +128,27 @@ function printSorted(sortType) {
 function printByDate (date) {
     const commandTip = 'Enter command argument: date in one of the formats: yyyy | yyyy-mm | yyyy-mm-dd';
     if (date) {
-        const pattern = /^(\d{4})(-(\d\d)){0,1}(-(\d\d)){0,1}$/;
+        const pattern = /^(\d{4})(\s*-\s*(\d\d)){0,1}(\s*-\s*(\d\d)){0,1}$/;
         const match = date.match(pattern);
-        console.log(match);
+        if (match) {
+            const fullDate = match[1] + '-' + (match[3] || '01') + '-' + (match[5] || '01');
+            if (checkDate(fullDate)) {
+                printTable(getComments().filter(comm => comm.date.localeCompare(fullDate) >= 0)
+                    .sort((a, b) => a.date.localeCompare(b.date)));
+            } else {
+                console.log('Incorrect date');
+            }
+        } else {
+            console.log(commandTip);
+        }
     } else {
         console.log(commandTip);
     }
 }
 
 function processCommand (command) {
-    const [commandType, commandArg] = command.split(' '); // TODO делить по вервому пробелу и только!!!!!!!
-    
+    const splitted = command.split(/\s+/);
+    const [commandType, commandArg] = [splitted[0], splitted.slice(1).join(' ')];
     switch (commandType.toLowerCase()) {
         case "show":
             printAll();
