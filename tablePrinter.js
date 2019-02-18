@@ -52,4 +52,3 @@ function printTable (data) {
 module.exports = {
     printTable
 };
-//todo атпустииии и забуууууд палярнай сияй звездооооооой

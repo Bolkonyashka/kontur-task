@@ -17,7 +17,7 @@ function getFiles () {
     const filePaths = getAllFilePathsWithExtension(process.cwd(), 'js');
 
     return filePaths.map((path) => { return { path: path, data: readFile(path) } });
-} //    tOdO :       s*@#-1205832efsef/'e'/;2018-01-23;haha;hihi;//todo
+}
 
 /**
  * Находит все todo комментарии в тексте файла, структурирует, наполняет аккумулирующий массив
@@ -30,7 +30,7 @@ function findComments (acc, fileObj) {
     const match = fileObj.data.match(pattern);
     if (match) {
         acc = acc.concat(match.map(comment => structComment(comment, fileObj.path)));
-    } // TODO не переиспользовать data, а ввести еще одно свойство - comments?
+    }
 
     return acc;
 }
@@ -46,35 +46,52 @@ function getExclamationCount (text) {
     return result? result.length : 0;
 }
 
+function handleDateString(dateString) {
+    let result = '';
+    /*dateString = dateString.replace(/ +/g, '');
+    const pattern = /^\d{4}(-\d\d(-\d\d){0,1}){0,1}|((\d\d-){0,1}\d\d-){0,1}\d{4}$/;
+    if (pattern.test(dateString)) {
+        dateString = normalizeDate(dateString);
+        if (checkDate(dateString)) {
+            result = dateString;
+        }
+    }*/
+    dateString = normalizeDate(dateString.replace(/ +/g, ''));
+    if (checkDate(dateString)) {
+        result = dateString;
+    }
+
+    return result;
+}
+
 function extendDate (dateString) {
-    const pattern = /^(\d{4})( *- *(\d\d)){0,1}( *- *(\d\d)){0,1}$/;
+    const pattern = /^(\d{4})(-(\d\d)){0,1}(-(\d\d)){0,1}$/;
     const match = date.match(pattern);
     const fullDate = match[1] + '-' + (match[3] || '01') + '-' + (match[5] || '01');
 }
 
 /**
- * Проверяет валидность даты для форматов yyyy-mm-dd и dd-mm-yyyy
- * @param {String} dateString Дата
+ * Проверяет валидность даты
+ * @param {String} dateString Дата в формате yyyy-mm-dd
  * @returns {Boolean} Результат проверки
  */
-function checkDate (dateString) { // TODO :roma; 15 - 02 - 2019; стоит ли оставлять ограничение до 3 тысячелетия? :)
-    const pattern = /^[1-9]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$|^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[1-9]\d{3}$/;
+function checkDate (dateString) {
+    const pattern = /^[1-9]\d{3}(-(0[1-9]|1[0-2])(-(0[1-9]|[12][0-9]|3[01])){0,1}){0,1}$/;
 
     return pattern.test(dateString.replace(/ +/g, ''));
 }
 
 /**
- * Удаляет пробелы из строковго представления даты,
- * если дата в формате dd-mm-yyyy, перводит в формат yyyy-mm-dd
+ * Если дата в формате dd-mm-yyyy или mm-yyyy, перводит в формат yyyy-mm-dd или yyyy-mm
  * @param {String} dateString Дата
- * @returns {String} Строковое представление даты без пробелов в формате yyyy-mm-dd
+ * @returns {String} Строковое представление даты в каноничном формате
  */
 function normalizeDate (dateString) {
-    let result = dateString.replace(/ +/g, '');
-    const pattern = /(\d\d)-(\d\d)-(\d{4})/;
+    let result = dateString;
+    const pattern = /((\d\d)-){0,1}(\d\d)-(\d{4})/;
     const match = result.match(pattern);
     if (match) {
-        result = match[3] + '-' + match[2] + '-' + match[1];
+        result = match[4] + '-' + match[3] + (match[1] ? '-' + match[2] : '');
     }
 
     return result;
@@ -88,13 +105,13 @@ function normalizeDate (dateString) {
  */
 function structComment (comment, path) {
     const fileName = path.replace(/^.*[\\\/]/, '');
-    const pattern = /\/\/ *TODO *[ :]{1} *(([^;]*);([^;]*);){0,1}(.*)/i; //todo исправить баг с точками с запятой
+    const pattern = /\/\/ *TODO *[ :]{1} *(([^;]*);([^;]*);){0,1}(.*)/i;
     const match = comment.match(pattern);
 
     return {
         importance: getExclamationCount(match[4]),
         user: match[2] ? match[2].trim() : '',
-        date: match[3] && checkDate(match[3]) ? normalizeDate(match[3]) : '',
+        date: match[3] ? handleDateString(match[3]) : '',
         text: match[4].trim(),
         file: fileName 
     };
@@ -129,7 +146,7 @@ function printImportant () {
  * которого начинается на указанный префикс или совпадает с ним
  * @param {String} username Префикс или полный никнейм для поиска
  */
-function printByUser(username) { // tODo : romochka;;обрабатывать пустой и неопределенный юзернейм
+function printByUser(username) {
     if (username) {
         printTable(getComments().filter(comm => comm.user.toLowerCase().indexOf(username.toLowerCase()) === 0));
     } else {
@@ -236,9 +253,10 @@ function processCommand (command) {
     }
 }
 
-// TODO you can do it!
-//               TODO           saskeUzum@k1-kokok sasai   ;   2019-01-01  ;   CHTOTOTTUTNETAK
-//TODO                           dadad                           
-//todo roma@4232@@44954""""";04-10-1996;  benedick cumberskotch!!!!!!!!!!
-//todo roma;17 - 02-2019;
-//todo:hfhfff;hfhffhfhf
+//toDo          :  adas@***54353\\//todo; 2018    ; sha slomaem
+//todo aa; 0123; fff
+//todo aa; 2015 - 12 - 01ffdf; fff
+//todo aa; 45-12-2015; fff
+//todo aa; 2015fffffff; fff
+//todo aa; sd2015; fff
+//todo aa; 12-201d5; fff
