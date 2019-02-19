@@ -20,16 +20,27 @@ function getFiles () {
 }
 
 /**
- * Находит все todo комментарии в тексте файла, структурирует, наполняет аккумулирующий массив
+ * @typedef {Object} Comment
+ * @property {Number} id - id комментария
+ * @property {Number} importance - количество восклицтельных знаков в тексте
+ * @property {String} user - создатель комментария
+ * @property {String} date - дата создания
+ * @property {String} text - текст комментария
+ * @property {String} file - файл, в котором комментарий написан
+ */
+
+/**
+ * Находит все todo комментарии в тексте файла, структурирует их, наполняет аккумулирующий массив
  * @param {Array} acc Аккумулирующий массив
  * @param {{path: String, data: String}} fileObj Объект с данными файла
- * @returns {Array<{importance: Number, user: String, date: String, text: String, file: String}>} Аккумулирующий массив
+ * @returns {Comment[]} Аккумулирующий массив
  */
 function findComments (acc, fileObj) {
+    let counter = acc.length;
     const pattern = /\/\/ *TODO *[ :]{1} *.*$/igm;
     const match = fileObj.data.match(pattern);
     if (match) {
-        acc = acc.concat(match.map(comment => structComment(comment, fileObj.path)));
+        acc = acc.concat(match.map(comment => structComment(comment, fileObj.path, counter++)));
     }
 
     return acc;
@@ -46,28 +57,28 @@ function getExclamationCount (text) {
     return result? result.length : 0;
 }
 
+/**
+ * Переводит дату в формат yyyy[-mm[-dd]], возвращает пустую строку, 
+ * если это невозможно
+ * @param {String} dateString Строка для форматирования
+ * @returns {String} Дата в формате yyyy[-mm[-dd]] или пустая строка
+ */
 function handleDateString(dateString) {
-    let result = '';
-    /*dateString = dateString.replace(/ +/g, '');
-    const pattern = /^\d{4}(-\d\d(-\d\d){0,1}){0,1}|((\d\d-){0,1}\d\d-){0,1}\d{4}$/;
-    if (pattern.test(dateString)) {
-        dateString = normalizeDate(dateString);
-        if (checkDate(dateString)) {
-            result = dateString;
-        }
-    }*/
     dateString = normalizeDate(dateString.replace(/ +/g, ''));
-    if (checkDate(dateString)) {
-        result = dateString;
-    }
 
-    return result;
+    return checkDate(dateString) ? dateString : '';
 }
 
+/**
+ * Дополняет неполные даты до yyyy-mm-01 или yyyy-01-01, возвращает пустую строку,
+ * если это невозможно
+ * @param {String} dateString Дата в формате yyyy[-mm[-dd]]
+ * @returns {String} Дата в формате yyyy-mm-dd или пустая строка
+ */
 function extendDate (dateString) {
     const pattern = /^(\d{4})(-(\d\d)){0,1}(-(\d\d)){0,1}$/;
-    const match = date.match(pattern);
-    const fullDate = match[1] + '-' + (match[3] || '01') + '-' + (match[5] || '01');
+    const match = dateString.match(pattern);
+    return match ? `${match[1]}-${match[3] || '01'}-${match[5] || '01'}` : ''
 }
 
 /**
@@ -101,14 +112,16 @@ function normalizeDate (dateString) {
  * Структурирует строку комментария в объект
  * @param {String} comment Строка комментария
  * @param {String} path Путь к файлу
- * @returns {{importance: Number, user: String, date: String, text: String, file: String}} Объект c информацией о комментарии
+ * @param {String} counter Номер комментария в порядке просмотра
+ * @returns {Comment} Объект c информацией о комментарии
  */
-function structComment (comment, path) {
+function structComment (comment, path, counter) {
     const fileName = path.replace(/^.*[\\\/]/, '');
     const pattern = /\/\/ *TODO *[ :]{1} *(([^;]*);([^;]*);){0,1}(.*)/i;
     const match = comment.match(pattern);
 
     return {
+        id: counter,
         importance: getExclamationCount(match[4]),
         user: match[2] ? match[2].trim() : '',
         date: match[3] ? handleDateString(match[3]) : '',
@@ -121,7 +134,7 @@ function structComment (comment, path) {
  * Возвращет массив, состоящий из всех todo коментариев в .js файлах
  * текущей директории, структурированных в объекты, за исключением
  * комментариев без текста, даты и имени пользователя
- * @returns {Array<{importance: Number, user: String, date: String, text: String, file: String}>} Массив комментариев, структурированных в объекты
+ * @returns {Comment[]} Массив комментариев, структурированных в объекты
  */
 function getComments () {
     return getFiles().reduce(findComments, []).filter(comm => comm.date || comm.user || comm.text);
@@ -179,23 +192,19 @@ function compareStrings (a, b) {
  */
 function printSorted(sortType) {
     const commandTip = 'Enter sort type: importance | user | date';
-    if (sortType) {
-        switch (sortType.toLowerCase()) {
-            case 'importance':
-                printTable(getComments().sort((a, b) => b.importance - a.importance));
-                break;
-            case 'user':
-                printTable(getComments().sort((a, b) => compareStrings(a.user, b.user)));
-                break;
-            case 'date':
-                printTable(getComments().sort((a, b) => -a.date.localeCompare(b.date)));
-                break;
-            default:
-                console.log(commandTip);
-                break;
-    }
-    } else {
-        console.log(commandTip);
+    switch ((sortType || '').toLowerCase()) {
+        case 'importance':
+            printTable(getComments().sort((a, b) => b.importance - a.importance || a.id - b.id));
+            break;
+        case 'user':
+            printTable(getComments().sort((a, b) => compareStrings(a.user.toLowerCase(), b.user.toLowerCase()) || a.id - b.id));
+            break;
+        case 'date':
+            printTable(getComments().sort((a, b) => -extendDate(a.date).localeCompare(extendDate(b.date)) || a.id - b.id));
+            break;
+        default:
+            console.log(commandTip);
+            break;
     }
 }
 
@@ -204,18 +213,13 @@ function printSorted(sortType) {
  * @param {String} date Строковое представление даты
  */
 function printByDate (date) {
-    const commandTip = 'Enter date in one of the formats: yyyy | yyyy-mm | yyyy-mm-dd';
-    const pattern = /^(\d{4})( *- *(\d\d)){0,1}( *- *(\d\d)){0,1}$/;
-    if (date && pattern.test(date)) {
-        const match = date.match(pattern);
-        const fullDate = match[1] + '-' + (match[3] || '01') + '-' + (match[5] || '01');
-        if (checkDate(fullDate)) {
-            printTable(getComments()
-                .filter(comm => comm.date.localeCompare(fullDate) >= 0)
-                .sort((a, b) => a.date.localeCompare(b.date)));
-        } else {
-            console.log('Incorrect date');
-        }
+    const commandTip = 'Enter date in one of the formats: yyyy | yyyy-mm | yyyy-mm-dd. Date must be correct.';
+    const fullDate = extendDate(handleDateString(date || ''));
+    if(fullDate) 
+    {
+        printTable(getComments()
+            .filter(comm => extendDate(comm.date).localeCompare(fullDate) >= 0)
+            .sort((a, b) => extendDate(a.date).localeCompare(extendDate(b.date)) || a.id - b.id));    
     } else {
         console.log(commandTip);
     }
@@ -253,10 +257,10 @@ function processCommand (command) {
     }
 }
 
-//toDo          :  adas@***54353\\//todo; 2018    ; sha slomaem
+//toDo          :  adas ; 2018    ; sha slo;maem!!!!!!!!;;;;;;;
 //todo aa; 0123; fff
-//todo aa; 2015 - 12 - 01ffdf; fff
-//todo aa; 45-12-2015; fff
-//todo aa; 2015fffffff; fff
-//todo aa; sd2015; fff
-//todo aa; 12-201d5; fff
+//todo aa; 2015 - 12 - 01; fff
+//todo aa; 15-12-2015; fff
+//todo aa; 2015; fff
+//todo aa; 03-2016; fff
+//todo aa; 12-2018; fff
