@@ -182,14 +182,7 @@ function printByUser(username) {
  * положительное, если больше, ноль, если строки эквивалентны.
  */
 function compareStrings (a, b) {
-    if (!a && b) {
-        return 1;
-    }
-    if (!b && a) {
-        return -1;
-    }
-
-    return a.localeCompare(b);
+    return !a && b ? 1 : a && !b ? -1 : a.localeCompare(b);
 }
 
 /**
@@ -273,22 +266,29 @@ function processCommand (command) {
 //TODO da;2018net; и мне тоже
 //TODO ----*\n\r;TODAY;
 //TODO veranda;;//TODO тут такие интересные все)))0
-//TODO ;;
-//TODO ;;
-//TODO ;;
-//TODO ;;
-//TODO ;;
-//TODO ;;
-//TODO ;;
-//TODO ;;
-//TODO ;;
+//TODO ;;;;;;;;;;;;;;;
+//TODO dfsfsdfsd;opoppopoppopop
+//TODO sdfsdfs;dsfsdfsfdsdf;sdfsdfsdfsdf
+//TODOsdfsdfsdfsfdsd
+//TODO     :   gogola ; 2018; eto ushe ne smeshno
+//TODO:I DASHE TAK?!
+//TODO                                 ooooooooo;   2019-02-11  moyaaaa; oboronaaaaa
+//TODO   cocococ;   10-04-   1983; SIBITYAKOV TUT
+//TODO с чегооооо бы мнеееееее сказал тот лоооооооорд; скланяяяяяца пред табооооооооой; на стягееее твоем все тот же кооооот
+//todo 
 // TODO Hi!
 // TODO Как дела?
 // TODO Veronika; 2013-12-25; С Наступающим 2014!
-// TODO Veronika; 2014-12-25; С Наступающим 2015!
+// TODO veronika; 2014-12-25; С Наступающим 2015!
 // TODO Veronika; 2015-12-25; С Наступающим 2016!
 // TODO Veronika; 2016-12-25; С Наступающим 2017!
-// TODO Veronika; 2017-12-25; С Наступающим 2018!
+// TODO veronika; 2017-12-25; С Наступающим 2018!
 // TODO Veronika; 2018-12-25; С Наступающим 2019!
 // TODO pe; 2018-12-26; Работать пора!!!
 // TODO Не понимаю, что здесь происходит...
+
+//todo !!! 1: Протестировать на все самые крайние случаи done
+//todo !!! 2: Полностью пройтись по тз и проверить соответствие
+//todo !!! 3: Удалить тестовые комменты из файлов
+//todo !!! 4: Просмотреть все функции и jsdoc
+//todo !!! 5: Прогнать снова по тестам и упаковать в архив
