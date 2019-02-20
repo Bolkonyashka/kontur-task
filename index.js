@@ -10,17 +10,7 @@ function app () {
 }
 
 /**
- * Возвращает массив объектов с данными о каждом .js файле текущей директории
- * @returns {Array<{path: String, data: String}>} Результирующий массив
- */
-function getFiles () {
-    const filePaths = getAllFilePathsWithExtension(process.cwd(), 'js');
-
-    return filePaths.map((path) => { return { path: path, data: readFile(path) } });
-}
-
-/**
- * @typedef {Object} Comment
+ * @typedef {Object} Comment Структурированный комментарий
  * @property {Number} id - id комментария
  * @property {Number} importance - количество восклицтельных знаков в тексте
  * @property {String} user - создатель комментария
@@ -30,9 +20,25 @@ function getFiles () {
  */
 
 /**
+ * @typedef {Object} FileObject Объект для представления файла
+ * @property {String} path - путь к файлу
+ * @property {String} data - содержимое файла
+ */
+
+/**
+ * Возвращает массив объектов с данными о каждом .js файле текущей директории
+ * @returns {FileObject[]} Результирующий массив
+ */
+function getFiles () {
+    const filePaths = getAllFilePathsWithExtension(process.cwd(), 'js');
+
+    return filePaths.map((path) => { return { path: path, data: readFile(path) } });
+}
+
+/**
  * Находит все todo комментарии в тексте файла, структурирует их, наполняет аккумулирующий массив
  * @param {Array} acc Аккумулирующий массив
- * @param {{path: String, data: String}} fileObj Объект с данными файла
+ * @param {FileObject} fileObj Объект с данными файла
  * @returns {Comment[]} Аккумулирующий массив
  */
 function findComments (acc, fileObj) {
@@ -112,7 +118,7 @@ function normalizeDate (dateString) {
  * Структурирует строку комментария в объект
  * @param {String} comment Строка комментария
  * @param {String} path Путь к файлу
- * @param {String} counter Номер комментария в порядке просмотра
+ * @param {Number} counter Номер комментария в порядке просмотра
  * @returns {Comment} Объект c информацией о комментарии
  */
 function structComment (comment, path, counter) {
@@ -256,11 +262,33 @@ function processCommand (command) {
             break;
     }
 }
-
-//toDo          :  adas ; 2018    ; sha slo;maem!!!!!!!!;;;;;;;
-//todo aa; 0123; fff
-//todo aa; 2015 - 12 - 01; fff
-//todo aa; 15-12-2015; fff
-//todo aa; 2015; fff
-//todo aa; 03-2016; fff
-//todo aa; 12-2018; fff
+//TODO 2017;ромочка; Я вот думаю, использовать классы здесь не так важно! ^_*_^
+//TODO admin;2017; вапервых; ва втарых; в третых идите нахуй
+//TODO ;; О МОЯ ПРЕКРАСНАЯ DAZDRAPEEERMAAAA!!!
+//TODO ;02 - 2017; gachimuchi
+//TODO abdras;; net у меня никаких
+//TODO ;2017-02; а вот и есть!!!
+//TODO sis 2015 aye;12-31-2017; lf lf с новым годом
+//TODO ()№%№;(№:;!"");2018-09-10; помогите никнейм норм выбрать please!!!
+//TODO da;2018net; и мне тоже
+//TODO ----*\n\r;TODAY;
+//TODO veranda;;//TODO тут такие интересные все)))0
+//TODO ;;
+//TODO ;;
+//TODO ;;
+//TODO ;;
+//TODO ;;
+//TODO ;;
+//TODO ;;
+//TODO ;;
+//TODO ;;
+// TODO Hi!
+// TODO Как дела?
+// TODO Veronika; 2013-12-25; С Наступающим 2014!
+// TODO Veronika; 2014-12-25; С Наступающим 2015!
+// TODO Veronika; 2015-12-25; С Наступающим 2016!
+// TODO Veronika; 2016-12-25; С Наступающим 2017!
+// TODO Veronika; 2017-12-25; С Наступающим 2018!
+// TODO Veronika; 2018-12-25; С Наступающим 2019!
+// TODO pe; 2018-12-26; Работать пора!!!
+// TODO Не понимаю, что здесь происходит...

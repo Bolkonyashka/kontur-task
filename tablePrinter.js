@@ -1,11 +1,20 @@
 /**
- * @typedef {Object} Comment
+ * @typedef {Object} Comment Структурированный комментарий
  * @property {Number} id - id комментария
  * @property {Number} importance - количество восклицтельных знаков в тексте
  * @property {String} user - создатель комментария
  * @property {String} date - дата создания
  * @property {String} text - текст комментария
  * @property {String} file - файл, в котором комментарий написан
+ */
+
+/**
+ * @typedef {Object} Config Конфигурация с данными для вывода таблицы
+ * @property {Number} userLength - ширина колонки "user"
+ * @property {Number} dateLength - ширина колонки "date"
+ * @property {Number} commentLength - ширина колонки "comment"
+ * @property {Number} fileNameLength - ширина колонки "fileName"
+ * @property {Number} fullLength - ширина разделяющей пунктирной полосы
  */
 
 /**
@@ -23,7 +32,7 @@ function getLimitedMax(first, second, limit) {
  * Создает объект конфигурации с данными о длинах колонок. 
  * Ширина колонок подбирается по самому длинному значению в колонке, но не больше максимальной.
  * @param {Comment[]} data Массив комментариев
- * @returns {{userLength: Number, dateLength: Number, commentLength: Number, commentLength: Number, fileNameLength: Number, fullLength: Number}} Объект конфигурации
+ * @returns {Config} Объект конфигурации
  */
 function getLengthConfig (data) {
     const config = {
@@ -58,7 +67,7 @@ function handleCellText(text, maxLen) {
 /**
  * Формирует отдельную строку таблицы с данными о комментарии
  * @param {Comment} comment Объект комментария
- * @param {{userLength: Number, dateLength: Number, commentLength: Number, commentLength: Number, fileNameLength: Number, fullLength: Number}} config Объект конфигурации
+ * @param {Config} config Объект конфигурации
  * @returns {String} Строка таблицы
  */
 function formTableRow (comment, config) {
@@ -75,9 +84,12 @@ function formTableRow (comment, config) {
  * Выводит в консоль таблицу с данными о каждом комментарии в переданном массиве
  * @param {Comment[]} data Массив комментариев
  */
-function printTable(data) {//todo aa; 12-2018; fff
+function printTable(data) {
     const config = getLengthConfig(data);
-    let table = `  !  |  ${handleCellText('user', config.userLength)}  |  ${handleCellText('date', config.dateLength)}  |  ${handleCellText('comment', config.commentLength)}  |  ${handleCellText('fileName', config.fileNameLength)}  \n`;
+    let table = `  !  |  ${handleCellText('user', config.userLength)}  ` + 
+        `|  ${handleCellText('date', config.dateLength)}  ` + 
+        `|  ${handleCellText('comment', config.commentLength)}  ` +
+        `|  ${handleCellText('fileName', config.fileNameLength)}  \n`;
     table += '-'.repeat(config.fullLength) + '\n';
 
     for (let comment of data) {
