@@ -22,7 +22,7 @@
  * @param {Number} first Первое число
  * @param {Number} second Второе число
  * @param {Number} limit Предел
- * @returns {Number} Максимум двух чисел, если максимум больше предела - возвращает его
+ * @returns {Number} Максимум двух чисел, если максимум больше предела - возвращает предел
  */
 function getLimitedMax(first, second, limit) {
     return Math.min(Math.max(first, second), limit);

@@ -36,23 +36,6 @@ function getFiles () {
 }
 
 /**
- * Находит все todo комментарии в тексте файла, структурирует их, наполняет аккумулирующий массив
- * @param {Array} acc Аккумулирующий массив
- * @param {FileObject} fileObj Объект с данными файла
- * @returns {Comment[]} Аккумулирующий массив
- */
-function findComments (acc, fileObj) {
-    let counter = acc.length;
-    const pattern = /\/\/ *TODO *[ :]{1} *.*$/igm;
-    const match = fileObj.data.match(pattern);
-    if (match) {
-        acc = acc.concat(match.map(comment => structComment(comment, fileObj.path, counter++)));
-    }
-
-    return acc;
-}
-
-/**
  * Возвращает количество восклицательных знаков в переданном тексте
  * @param {String} text Текст для поиска
  * @returns {Number} Количество восклицательных знаков
@@ -60,19 +43,7 @@ function findComments (acc, fileObj) {
 function getExclamationCount (text) {
     const result = text.match(/!/g);
 
-    return result? result.length : 0;
-}
-
-/**
- * Переводит дату в формат yyyy[-mm[-dd]], возвращает пустую строку, 
- * если это невозможно
- * @param {String} dateString Строка для форматирования
- * @returns {String} Дата в формате yyyy[-mm[-dd]] или пустая строка
- */
-function handleDateString(dateString) {
-    dateString = normalizeDate(dateString.replace(/ +/g, ''));
-
-    return checkDate(dateString) ? dateString : '';
+    return result ? result.length : 0;
 }
 
 /**
@@ -104,14 +75,26 @@ function checkDate (dateString) {
  * @returns {String} Строковое представление даты в каноничном формате
  */
 function normalizeDate (dateString) {
-    let result = dateString;
-    const pattern = /((\d\d)-){0,1}(\d\d)-(\d{4})/;
+    let result = dateString.replace(/ +/g, '');
+    const pattern = /^((\d\d)-){0,1}(\d\d)-(\d{4})$/;
     const match = result.match(pattern);
     if (match) {
         result = match[4] + '-' + match[3] + (match[1] ? '-' + match[2] : '');
     }
 
     return result;
+}
+
+/**
+ * Переводит дату в формат yyyy[-mm[-dd]], если это возможно,
+ * проверяет дату на валидность
+ * @param {String} dateString Строка для форматирования
+ * @returns {String} Дата в формате yyyy[-mm[-dd]] или пустая строка, если дата некорректна
+ */
+function handleDateString(dateString) {
+    dateString = normalizeDate(dateString);
+
+    return checkDate(dateString) ? dateString : '';
 }
 
 /**
@@ -128,12 +111,29 @@ function structComment (comment, path, counter) {
 
     return {
         id: counter,
-        importance: getExclamationCount(match[4]),
+        importance: getExclamationCount(match[4] || ''),
         user: match[2] ? match[2].trim() : '',
         date: match[3] ? handleDateString(match[3]) : '',
         text: match[4].trim(),
         file: fileName 
     };
+}
+
+/**
+ * Находит все todo комментарии в тексте файла, структурирует их, наполняет аккумулирующий массив
+ * @param {Comment[]} acc Аккумулирующий массив
+ * @param {FileObject} fileObj Объект с данными файла
+ * @returns {Comment[]} Аккумулирующий массив
+ */
+function findComments(acc, fileObj) {
+    let counter = acc.length;
+    const pattern = /\/\/ *TODO *[ :]{1} *.*$/igm;
+    const match = fileObj.data.match(pattern);
+    if (match) {
+        acc = acc.concat(match.map(comment => structComment(comment, fileObj.path, counter++)));
+    }
+
+    return acc;
 }
 
 /**
@@ -154,7 +154,7 @@ function printAll () {
 }
 
 /**
- * Выводит таблицу с комментариями, в которых есть восклицательный знак
+ * Выводит таблицу с комментариями, в которых есть хоть один восклицательный знак
  */
 function printImportant () {
     printTable(getComments().filter(comm => comm.importance > 0));
@@ -212,7 +212,7 @@ function printSorted(sortType) {
  * @param {String} date Строковое представление даты
  */
 function printByDate (date) {
-    const commandTip = 'Enter date in one of the formats: yyyy | yyyy-mm | yyyy-mm-dd. Date must be correct.';
+    const commandTip = 'Enter the correct date in one of the formats: yyyy | yyyy-mm | yyyy-mm-dd | mm-yyyy | dd-mm-yyyy';
     const fullDate = extendDate(handleDateString(date || ''));
     if(fullDate) 
     {
@@ -229,7 +229,7 @@ function printByDate (date) {
  * @param {String} command Комманда для выполнения
  */
 function processCommand (command) {
-    const splitted = command.split(/\s+/);
+    const splitted = command.split(/ +/);
     const [commandType, commandArg] = [splitted[0], splitted.slice(1).join(' ')];
     switch (commandType.toLowerCase()) {
         case "show":
@@ -255,40 +255,8 @@ function processCommand (command) {
             break;
     }
 }
-//TODO 2017;ромочка; Я вот думаю, использовать классы здесь не так важно! ^_*_^
-//TODO admin;2017; вапервых; ва втарых; в третых идите нахуй
-//TODO ;; О МОЯ ПРЕКРАСНАЯ DAZDRAPEEERMAAAA!!!
-//TODO ;02 - 2017; gachimuchi
-//TODO abdras;; net у меня никаких
-//TODO ;2017-02; а вот и есть!!!
-//TODO sis 2015 aye;12-31-2017; lf lf с новым годом
-//TODO ()№%№;(№:;!"");2018-09-10; помогите никнейм норм выбрать please!!!
-//TODO da;2018net; и мне тоже
-//TODO ----*\n\r;TODAY;
-//TODO veranda;;//TODO тут такие интересные все)))0
-//TODO ;;;;;;;;;;;;;;;
-//TODO dfsfsdfsd;opoppopoppopop
-//TODO sdfsdfs;dsfsdfsfdsdf;sdfsdfsdfsdf
-//TODOsdfsdfsdfsfdsd
-//TODO     :   gogola ; 2018; eto ushe ne smeshno
-//TODO:I DASHE TAK?!
-//TODO                                 ooooooooo;   2019-02-11  moyaaaa; oboronaaaaa
-//TODO   cocococ;   10-04-   1983; SIBITYAKOV TUT
-//TODO с чегооооо бы мнеееееее сказал тот лоооооооорд; скланяяяяяца пред табооооооооой; на стягееее твоем все тот же кооооот
-//todo 
-// TODO Hi!
-// TODO Как дела?
-// TODO Veronika; 2013-12-25; С Наступающим 2014!
-// TODO veronika; 2014-12-25; С Наступающим 2015!
-// TODO Veronika; 2015-12-25; С Наступающим 2016!
-// TODO Veronika; 2016-12-25; С Наступающим 2017!
-// TODO veronika; 2017-12-25; С Наступающим 2018!
-// TODO Veronika; 2018-12-25; С Наступающим 2019!
-// TODO pe; 2018-12-26; Работать пора!!!
-// TODO Не понимаю, что здесь происходит...
-
-//todo !!! 1: Протестировать на все самые крайние случаи done
-//todo !!! 2: Полностью пройтись по тз и проверить соответствие
-//todo !!! 3: Удалить тестовые комменты из файлов
-//todo !!! 4: Просмотреть все функции и jsdoc
-//todo !!! 5: Прогнать снова по тестам и упаковать в архив
+//todo !!! 1: done Протестировать на все самые крайние случаи
+//todo !!! 2: done Полностью пройтись по тз и проверить соответствие
+//todo !!! 3: done Удалить тестовые комменты из файлов
+//todo !!! 4: done Просмотреть все функции и jsdoc
+//todo !!! 5: done Прогнать снова по тестам и упаковать в архив
