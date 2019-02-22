@@ -32,7 +32,7 @@ function app () {
 function getFiles () {
     const filePaths = getAllFilePathsWithExtension(process.cwd(), 'js');
 
-    return filePaths.map((path) => { return { path: path, data: readFile(path) } });
+    return filePaths.map((path) => { return { path: path, data: readFile(path) }; });
 }
 
 /**
@@ -55,7 +55,7 @@ function getExclamationCount (text) {
 function extendDate (dateString) {
     const pattern = /^(\d{4})(-(\d\d)){0,1}(-(\d\d)){0,1}$/;
     const match = dateString.match(pattern);
-    return match ? `${match[1]}-${match[3] || '01'}-${match[5] || '01'}` : ''
+    return match ? `${match[1]}-${match[3] || '01'}-${match[5] || '01'}` : '';
 }
 
 /**
